@@ -1,25 +1,37 @@
-import socket
+from threading import Thread
 
-HEADER = 64
-PORT = 5050
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-# SERVER = "192.168.1.34"
-SERVER = socket.gethostbyname(socket.gethostname())
-print(SERVER)
-ADDR = (SERVER, PORT)
+from const  import *
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket(AF_INET, SOCK_STREAM)
 client.connect(ADDR)
 
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(2048).decode(FORMAT))
+messages = []
+
+def receive_message():
+    """
+    receive mesage from user
+    :return: msg
+    """
+
+    while True:
+        try:
+            msg = client.recv(BUFFZISE).decode()
+            messages.append(msg)
+            print(msg)
+        except Exception as e:
+            print("[EXCEPTION]", e)
+            break
+
+def send_message(msg):
+    """
+    send mesage from user
+    :return: msg
+    """
+
+    client.send(bytes(msg, "utf8"))
+    if msg == "{quit}":
+        client.close()
+
 
 start = True
 while start:
