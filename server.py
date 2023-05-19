@@ -1,70 +1,90 @@
+from socket import socket, AF_INET, SOCK_STREAM, gethostbyname, gethostname
 from threading import Thread
 import datetime
 
-from const import *
-from user import User
+from person import Person
 
+# HOST = "192.168.1.34"
+HOST = gethostbyname(gethostname())
+PORT = 5500
+BUFFZISE = 512
+ADDR = (HOST, PORT)
+FORMAT = "utf-8"
+MAX_CONNECTIONS = 10
+SERVER = socket(AF_INET, SOCK_STREAM)
+SERVER.bind(ADDR) # set up server
 
-users = []
+persons = []
+
 
 def broadcast(msg, name):
     """
-    Send messages to all clients
+    Send messages of all clients
     :params msg: bytes["utf8"]
     :params name: str
     :return:
     """
-    for user in users:
-        client = user.client
-        client.send(bytes(name + ": ", 'utf8') + msg)
 
-def client_communication(user):
+    for person in persons:
+        client = person.client
+        client.send(bytes(name, 'utf8') + msg)
+
+
+def client_communication(person: Person):
     """
     Thread to handle all messages from client
     :params user: User
     :return: None
     """
 
-    client = user.client
-    addr = user.addr
-
+    client = person.client
     # get users name
     name = client.recv(BUFFZISE).decode("utf8")
-    msg = f"{name} has joined the chat!"
-    broadcast(msg) # broadcast welcome message
+    person.set_name(name)
+    welcome_msg = bytes(f"{name} has joined the chat!", 'utf8')
+    broadcast(welcome_msg, "") # broadcast welcome message
 
-    while True:
+    run = True
+    while run:
         try:
             msg = client.recv(BUFFZISE)
             print(f"{name}: ", msg.decode("utf8"))
+
             if msg == bytes("{quit}", "utf8"):
-                broadcast(f"{name} has left the chat..." , name)
-                client.send(bytes("{quit}", "utf8"))
+                client.send(msg)
                 client.close()
-                users.remove(user)
-                break
+                persons.remove(person)
+                broadcast(bytes(f"{name} has left the chat...", "utf8"), "")
+                print(f"[DISCONNECTED] {name}")
+                run = False
+
             else:
-                client.send(msg, name)
+                broadcast(msg, name+": ")
 
         except Exception as e:
             print("[EXCEPTION]", e)
-            break
+            run = False
+
 
 def wait_for_connection():
     """
     wait for connection of a new client...
     """
+
     run = True
     while run:
         try:
             client, addr = SERVER.accept()
-            user = User(addr, client)
-            users.append(user)
-            print(f"[CONNECTION] {addr} connected ti the server at {datetime.datetime.now()}")
-            Thread(target=client_communication, args=(client,)).start()
+            person = Person(client ,addr)
+            persons.append(person)
+            time = datetime.datetime.now().time()
+            print(f"[CONNECTION] {addr} connected at {time}")
+            Thread(target=client_communication, args=(person,)).start()
+
         except Exception  as e:
             print("[EXCEPTION]", e)
             run = False
+
     print("SERVER CRASHED")
 
 
