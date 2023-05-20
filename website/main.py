@@ -14,14 +14,14 @@ def login():
 @app.route("/logout")
 def logout():
     session.pop(NAME_KEY, None)
-    return redirect(url_for("login"))
+    return redirect(url_for("home"))
 
 
 @app.route("/")
 def home():
     # if NAME_KEY not in session:
     #     return redirect(url_for("login"))
-    return render_template("home.html", name=home)
+    return render_template("home.html", name="home")
 
 
 if __name__ == "__main__":

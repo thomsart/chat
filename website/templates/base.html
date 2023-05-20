@@ -7,8 +7,18 @@
         <!-- <script src="script.js"></script> -->
     </head>
     <body>
-        <div>
-            {% block content %}{% endblock %}
-        </div>
+
+        <nav>
+            <a href="/login"><button>Login</button></a>
+            <a href="/logout"><button>Logout</button></a>
+        </nav>
+
+        <main>
+            {% block main %}{% endblock %}
+        </main>
+
+        <footer>
+        </footer>
+
     </body>
 </html>
